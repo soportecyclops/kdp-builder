@@ -1,0 +1,62 @@
+protagonist: [Conejo, Oso, Zorro, Gato, Perro, Raton, Buho, Pinguino, Tortuga, Elefante, Leon, Mono, Jirafa, Panda, Koala, Ardilla, Erizo, Pato, Robot, Dragon]
+name: [Emma, Olivia, Sofia, Valentina, Mia, Lila, Lucia, Elena, Rubi, Clara, Liam, Noa, Lucas, Leo, Oliver, Juan, Enzo, Fito, Teo, Carlitos]
+setting: [Bosque, Playa, Montana, Aldea, Granja, Castillo, Escuela, Selva, Artico, Desierto, Lago, Rio, Jardin, Casa del arbol, Cueva, Estacion espacial, Luna, Valle Arcoiris, Isla de Cristal, Bosque Nevado]
+goal: [Encontrar un juguete perdido, Hacer un nuevo amigo, Ayudar a un vecino, Volver a casa, Descubrir un lugar secreto, Aprender a volar, Ganar un concurso amistoso, Entregar un regalo, Encontrar un tesoro, Plantar una semilla magica, Salvar una celebracion, Aprender una habilidad nueva, Rescatar a un animalito bebe, Construir algo especial, Seguir un mapa misterioso, Juntar caracoles de colores, Encontrar una estrella perdida, Hornear una torta de cumpleanos, Preparar una fiesta sorpresa, Explorar lo desconocido]
+problem: [Empieza una tormenta, El camino desaparece, Se rompe un puente, Se pierde un mapa, Se apagan las luces, Crece el rio, Sopla un viento fuerte, Aparece niebla espesa, Una puerta queda cerrada, Se traba una rueda, Se vuela un globo, Se cae una canasta, El sendero se vuelve confuso, La nieve tapa las huellas, La cueva queda oscura, Se enreda un barrilete, Se detiene un reloj, Se aleja un bote, Una puerta no abre, No se encuentra a un amigo]
+helper: [Buho Sabio, Zorro Amistoso, Tortuga Amable, Leon Valiente, Elefante Gentil, Mono Ingenioso, Delfin Alegre, Ratoncita Pequena, Loro de Colores, Castor Trabajador, Pinguino Contento, Hada Magica, Mago Amigable, Robot Servicial, Abuela, Abuelo, Guardabosques, Unicornio, Dragoncito, Luciernaga]
+obstacle: [Un rio profundo, Una colina empinada, Una cueva oscura, Un bosque enredado, Un laberinto gigante, Un sendero resbaladizo, Un puente roto, Un campo de espinas, Una montana nevada, Un desierto caluroso, Un tunel angosto, Un acantilado rocoso, Un lago congelado, Un canon ventoso, Un arbol caido, Un sendero embarrado, Un muro alto, Una cascada torrentosa, Una telarana gigante, Un pasadizo oculto]
+object: [Llave Dorada, Mapa Magico, Brujula de Cristal, Farol Brillante, Pluma Arcoiris, Campanita de Plata, Soga Encantada, Mochila Magica, Collar de Estrella, Moneda de la Suerte, Bellota Dorada, Cristal de Luna, Telescopio Chiquito, Caracol Susurrador, Pincel Magico, Almohada de Suenos, Cofre del Tesoro, Alfombra Voladora, Capa Invisible, Semilla de Esperanza]
+emotion: [Curioso, Valiente, Nervioso, Emocionado, Feliz, Solitario, Orgulloso, Esperanzado, Confundido, Decidido, Tranquilo, Agradecido, Paciente, Amable, Carinoso, Sorprendido, Confiado, Gentil, Jugueton, Pensativo]
+solution: [Trabajaron en equipo, Pidio ayuda, Se mantuvo tranquilo, Uso la creatividad, Nunca se rindio, Compartio con otros, Resolvio un acertijo, Siguio las pistas, Dijo la verdad, Mostro amabilidad, Escucho con atencion, Practico todos los dias, Confio en un amigo, Creyo en si mismo, Uso el objeto especial con cuidado, Hizo un plan ingenioso, Aprendio de un error, Ayudo primero a otro, Fue paso a paso, Uso su valentia]
+antagonist: [Trol Grunon, Zorro Astuto, Mono Travieso, Duende Tonto, Nube de Tormenta, Viento Fuerte, Gigante de Hielo, Dragon Dormilon, Cuervo Tramposo, Pirata Codicioso, Monstruo de Sombras, Pulpo Gigante, Lobo Hambriento, Monstruo de Espinas, Remolino de Polvo, Mapache Travieso, Robot Averiado, Enredaderas Salvajes, Ola Gigante, Niebla Magica]
+companion: [Mejor Amigo, Hermanita, Hermanito, Primo, Cachorro, Gatito, Pajarito bebe, Conejito, Osito de peluche, Robot amigo, Dragoncito bebe, Unicornio, Mariposa, Ardillita, Erizito, Patito, Tortuguita, Pinguinito, Zorrito, Cervatillo]
+time_of_day: [Madrugada, Manana, Mediodia, Tarde, Atardecer, Anochecer, Crepusculo, Noche, Medianoche, Amanecer]
+season: [Primavera, Verano, Otono, Invierno, Temporada de lluvias, Temporada de nieve, Temporada de cosecha, Temporada de flores]
+weather: [Soleado, Nublado, Ventoso, Lluvioso, Nevado, Con niebla, Tormentoso, Arcoiris despues de la lluvia, Con brisa, Calido, Frio, Con escarcha, Con llovizna, Cielo despejado, Noche estrellada]
+twist: [El tesoro esta vacio, El mapa estaba al reves, El monstruo es amistoso, Lo perdido estaba en casa, El ayudante sabia el secreto, La cueva esconde un jardin, La llave abre otra puerta, Al dragon le encanta la musica, El puente se arregla solo, La tormenta se detiene de golpe, Aparece un nuevo amigo, La vieja leyenda es verdad, La estrella cae del cielo, El rio cambia de direccion, La flor empieza a brillar, El castillo cobra vida, El juguete empieza a hablar, El arbol revela un secreto, La brujula apunta a la bondad, El viaje era el verdadero tesoro]
+reward: [Una medalla dorada, Una estrella brillante, Una pulsera de la amistad, Un cofre del tesoro, Una pluma magica, Una corona de cristal, Un barrilete de colores, Un recuerdo feliz, Una hoja dorada, Una cinta arcoiris, Un libro especial, Una semilla magica, Una insignia de madera, Una coronita, Una mochila nueva, Un silbato de plata, Una piedra de la suerte, Un cristal brillante, Una canasta de frutas, Un regalo sorpresa]
+celebration: [Picnic, Fiesta de cumpleanos, Festival de baile, Concierto de musica, Cena familiar, Noche de fogata, Desfile, Fiesta de te, Fiesta en la playa, Festival del bosque, Festival de globos, Show de fuegos artificiales, Fiesta de galletitas, Hora del cuento, Celebracion en el jardin, Fiesta de bienvenida, Festival de la cosecha, Festival de la nieve, Festival de faroles, Dia de la amistad]
+ending: [Volvio a casa feliz, Hizo un amigo para toda la vida, Aprendio algo nuevo, Se convirtio en heroe local, Empezo una nueva aventura, Encontro un nuevo hogar, Compartio el tesoro, Se reunio con su familia, Salvo la aldea, Construyo un parque hermoso, Abrio una pequena biblioteca, Planto un jardin magico, Se gano el respeto de todos, Inspiro a la comunidad, Resolvio todos los misterios, Cumplio un sueno, Sonrio todo el camino a casa, Miraron el atardecer juntos, Prometieron volver a verse, Vivio feliz para siempre]
+moral: [La amistad no tiene precio, La amabilidad lo cambia todo, Nunca te rindas, El trabajo en equipo hace facil lo dificil, La honestidad siempre gana, Todos tenemos talentos especiales, Compartir trae felicidad, La valentia crece de a poco, Ayudar a otros nos ayuda a todos, La paciencia trae buenos resultados, Los errores nos ensenan, La familia siempre es importante, El amor es mas fuerte que el miedo, La curiosidad lleva a descubrir, Los actos pequenos hacen grandes diferencias, Cree en vos mismo, Todo problema tiene solucion, Ser diferente es maravilloso, Escuchar es un superpoder, Los suenos se cumplen con esfuerzo]
+trait: [Valiente, Curioso, Amable, Divertido, Ingenioso, Timido, Amistoso, Aventurero, Creativo, Paciente, Generoso, Honesto, Jugueton, Servicial, Tranquilo, Energico, Imaginativo, Responsable, Gentil, Decidido, Alegre, Pensativo, Confiado, Educado, Sabio]
+activity: [Pintar cuadros, Cantar canciones, Bailar, Leer libros, Construir cosas, Explorar la naturaleza, Remontar barriletes, Plantar flores, Hornear galletitas, Juntar piedritas, Mirar las estrellas, Jugar juegos, Nadar, Andar en bici, Hacer manualidades, Sacar fotos, Contar historias, Tocar musica, Cuidar el jardin, Ayudar animales, Aprender cosas nuevas, Pescar, Observar el cielo, Resolver rompecabezas, Jugar con amigos]
+food: [Tarta de manzana, Torta de chocolate, Helado de frutilla, Panqueques, Galletitas, Sandwiches, Pizza, Ensalada de frutas, Tostadas con miel, Cupcakes, Galletas de queso, Muffins de arandanos, Pan de banana, Pochoclo, Torta de zanahoria, Cupcakes arcoiris, Sopa de verduras, Yogur de frutilla, Sandwiches de mermelada, Galletitas de miel, Rodajas de manzana, Panqueques de frutos rojos, Chocolate caliente, Tarta de calabaza, Fruta fresca]
+edu_theme: [Amistad, Colores, Numeros, Letras, Formas, Animales, Naturaleza, Estaciones, Clima, Emociones, Trabajo en equipo, Compartir, Respeto, Creatividad, Resolver problemas, Habitos saludables, Reciclaje, Espacio, Ciencia, Musica, Arte, Plantas, Familias, Otras culturas, Seguridad]
+genre: [Cuento de aventuras, Cuento para dormir, Cuento divertido, Cuento de hadas, Cuento de animales, Cuento de misterio, Cuento de fantasia, Cuento de amistad, Cuento educativo, Aventura magica, Aventura espacial, Cuento de naturaleza, Cuento de granja, Aventura marina, Busqueda del tesoro, Cuento de vacaciones, Cuento de viajes, Aventura robotica, Cuento de suenos, Cuento reconfortante]
+
+protagonist_profiles:
+  - {animal: Oso, role: heroe, traits: [amable, gentil, honesto]}
+  - {animal: Conejo, role: heroe, traits: [curioso, jugueton, valiente]}
+  - {animal: Zorro, role: heroe, traits: [ingenioso, servicial, alegre]}
+  - {animal: Buho, role: heroe, traits: [sabio, paciente, tranquilo]}
+  - {animal: Pinguino, role: heroe, traits: [decidido, amistoso, divertido]}
+  - {animal: Robot, role: heroe, traits: [creativo, responsable, pensativo]}
+antagonist_profiles:
+  - {animal: Trol Grunon, role: villano, traits: [grunon, egoista]}
+  - {animal: Zorro Astuto, role: antiheroe, traits: [tramposo, travieso, secretamente solitario]}
+  - {animal: Nube de Tormenta, role: villano, traits: [ruidosa, impaciente]}
+  - {animal: Mapache Travieso, role: antiheroe, traits: [codicioso, curioso, con remedio]}
+
+compat_setting:
+  Pinguino: [Artico, Bosque Nevado, Playa, Lago]
+  Tortuga: [Playa, Lago, Rio, Jardin, Isla de Cristal]
+  Pato: [Lago, Rio, Granja, Jardin, Playa]
+  Robot: [Estacion espacial, Luna, Escuela, Aldea, Castillo]
+  Mono: [Selva, Bosque, Casa del arbol]
+  Koala: [Bosque, Casa del arbol, Jardin]
+  Panda: [Bosque, Montana, Bosque Nevado]
+  Leon: [Desierto, Selva, Montana]
+moral_by_solution:
+  Trabajaron en equipo: El trabajo en equipo hace facil lo dificil
+  Pidio ayuda: Ayudar a otros nos ayuda a todos
+  Se mantuvo tranquilo: La paciencia trae buenos resultados
+  Nunca se rindio: Nunca te rindas
+  Compartio con otros: Compartir trae felicidad
+  Mostro amabilidad: La amabilidad lo cambia todo
+  Dijo la verdad: La honestidad siempre gana
+  Confio en un amigo: La amistad no tiene precio
+  Creyo en si mismo: Cree en vos mismo
+  Aprendio de un error: Los errores nos ensenan
+  Uso su valentia: La valentia crece de a poco
+  Practico todos los dias: Los suenos se cumplen con esfuerzo
+  Escucho con atencion: Escuchar es un superpoder

@@ -1,0 +1,454 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><title>KDP Builder</title>
+<style>
+body{font-family:system-ui;margin:0;background:#111;color:#ddd}
+header{background:#1b1b2f;padding:8px 16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+header b{color:#7ec8ff}
+button{background:#2d6cdf;color:#fff;border:0;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px}
+button.sec{background:#444}button.danger{background:#a33}button:disabled{background:#333;color:#777;cursor:not-allowed}
+main{padding:12px;display:grid;grid-template-columns:320px 1fr 1.2fr;gap:12px;height:calc(100vh - 96px);box-sizing:border-box}
+section{background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:12px;overflow:auto}
+h3{margin:4px 0 4px;color:#7ec8ff;font-size:14px}
+.help{color:#8a8fa3;font-size:12px;margin:0 0 10px}
+textarea,input,select{width:100%;background:#0e0e0e;color:#ddd;border:1px solid #333;border-radius:4px;padding:7px;box-sizing:border-box;font-size:13px}
+textarea.story-edit{font-family:Georgia,serif;font-size:14px;line-height:1.5;min-height:180px}
+label{font-size:12px;color:#9aa;display:block;margin-top:8px}
+.story{padding:6px 8px;cursor:pointer;border-radius:4px;font-size:13px;border:1px solid transparent;margin-bottom:2px}
+.story:hover{background:#26263a}.story.sel{background:#2d6cdf22;border-color:#2d6cdf66}
+.book{border:1px solid #333;border-radius:8px;padding:8px 10px;margin-bottom:8px;cursor:pointer;background:#161622}
+.book:hover{border-color:#2d6cdf}
+.book.sel{border-color:#2d6cdf;background:#1b2440}
+.book .t{font-weight:600;color:#dfe6ff}
+.book .meta{font-size:11px;color:#8a8fa3;margin-top:3px}
+.bag{margin-bottom:12px}.row{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap;align-items:center}
+#tabs button{background:#333}#tabs button.act{background:#2d6cdf}
+.step{background:#20203a;border-radius:6px;padding:6px 10px;margin:12px 0 4px;color:#7ec8ff;font-weight:600;font-size:13px}
+.badge{display:inline-block;background:#333;border-radius:10px;padding:1px 7px;font-size:10px;margin-left:4px;vertical-align:middle}
+.badge.ok{background:#1f5b1f}.badge.mid{background:#5b4a1f}
+.wc{color:#8a8fa3;font-size:11px;margin-left:8px}
+#edtabs button{background:#333;padding:4px 10px;font-size:12px}
+#edtabs button.act{background:#2d6cdf}
+pre{white-space:pre-wrap;font-family:Georgia,serif;font-size:14px;line-height:1.5;background:#0e0e0e;border:1px solid #2a2a2a;border-radius:6px;padding:10px;min-height:60px}
+#progressbar{background:#242438;border-radius:8px;padding:6px 12px;display:flex;gap:14px;align-items:center;width:100%;box-sizing:border-box;font-size:12px;margin:0 16px}
+#pb_track{flex:1;height:10px;background:#0e0e0e;border-radius:5px;overflow:hidden;min-width:120px}
+#pb_fill{height:100%;width:0%;background:linear-gradient(90deg,#2d6cdf,#7fdc7f);transition:width .4s}
+#toast{position:fixed;bottom:16px;right:16px;background:#2d6cdf;color:#fff;padding:10px 16px;border-radius:8px;display:none;max-width:420px;z-index:9}
+</style></head><body>
+<header><b>KDP Builder</b>
+<span id="tabs"><button onclick="tab('books')" id="tb_books" class="act">&#128218; Libros</button>
+<button onclick="tab('bags')" id="tb_bags">&#127890; Bolsas</button>
+<button onclick="tab('logs')" id="tb_logs">&#128220; Registro</button></span>
+<span id="status" style="margin-left:auto;color:#ffd479"></span>
+<button class="danger" id="btn_cancel" style="display:none" onclick="cancelGen()">&#9632; Cancelar</button>
+</header>
+<div style="padding:6px 0;background:#15151f"><div id="progressbar">
+<span id="pb_book" style="color:#7ec8ff;font-weight:600">Sin libro seleccionado</span>
+<div id="pb_track"><div id="pb_fill"></div></div>
+<span id="pb_pct">0%</span>
+<span id="pb_detail" style="color:#8a8fa3"></span>
+</div></div>
+
+<main id="v_books">
+<section>
+<div class="step">PASO 1 &middot; Libros</div>
+<p class="help">Click en una tarjeta para trabajar ese libro. &#128465; elimina definitivo.</p>
+<div id="booklist"></div><hr style="border-color:#2a2a2a">
+<h3>&#10133; Nuevo libro</h3>
+<label>T&iacute;tulo</label><input id="nb_title" placeholder="Ej: 30 Cuentos para Dormir">
+<label>Idioma</label>
+<select id="nb_lang"><option value="en">Ingl&eacute;s</option><option value="es">Espa&ntilde;ol</option></select>
+<div class="row">
+<div style="flex:1"><label>Cuentos</label><input id="nb_n" type="number" value="30"></div>
+<div style="flex:1"><label>Palabras c/u</label><input id="nb_w" type="number" value="450"></div>
+</div>
+<label>Modelo BORRADOR (local)</label><select id="nb_local"></select>
+<label>Modelo EDICI&Oacute;N (cloud)</label><select id="nb_cloud"></select>
+<div class="row"><button onclick="createBook()">Crear libro</button></div>
+</section>
+
+<section>
+<div class="step">PASO 2 &middot; Cuentos del libro</div>
+<h3 id="st_title">&mdash;</h3>
+<p class="help">Iconos por cuento: &#128221; borrador &middot; &#10024; editado (con el nombre del modelo) &middot; &#127942; final.
+Click en un cuento para trabajarlo a la derecha.</p>
+<div class="row">
+<button onclick="genOutline()" id="btn_outline" disabled>&#127922; Generar specs</button>
+<button class="sec" onclick="writeAll()" id="btn_writeall" disabled>&#9997; Escribir faltantes</button>
+<button onclick="generateAll()" id="btn_genall" disabled>&#9889; Generar libro completo</button>
+</div>
+<div id="stories"></div>
+<pre id="genall_log" style="display:none;font-family:monospace;font-size:12px;max-height:260px;color:#ffd479"></pre>
+<div class="step">PASO 6 &middot; Libro final (EPUB)</div>
+<p class="help">Prioridad autom&aacute;tica por cuento: FINAL &gt; editado &gt; borrador.</p>
+<div class="row">
+<select id="buildtag" style="max-width:220px"><option value="">(auto: final/editado/borrador)</option></select>
+<button class="sec" onclick="buildEpub()" id="btn_build" disabled>&#128214; Generar EPUB</button>
+<a id="dl" style="display:none;color:#7ec8ff" href="#">&#11015; Descargar</a></div>
+<div class="row"><button class="sec" onclick="genReport()" id="btn_report" disabled>&#128203; Generar log del libro</button>
+<a id="dlreport" style="display:none;color:#7ec8ff" href="#">&#11015; Descargar log (.md)</a></div>
+</section>
+
+<section>
+<h3 id="ed_title">&mdash; seleccion&aacute; un cuento &mdash;</h3>
+
+<div class="step">SPEC (ingredientes) &mdash; edit&aacute; ANTES de escribir</div>
+<p class="help">Cambi&aacute; cualquier campo y "Guardar spec". El borrador se genera desde esta spec.</p>
+<div id="specform"></div>
+<div class="row"><button class="sec" onclick="saveSpec()" id="btn_savespec" disabled>&#128190; Guardar spec</button></div>
+
+<div class="step">PASO 3 &middot; Borrador (modelo local) &mdash; editable</div>
+<p class="help">"Escribir" genera desde la spec (pisa lo que haya). Pod&eacute;s corregir el texto a mano y "Guardar cambios" antes de editar con cloud.</p>
+<div class="row">
+<button onclick="writeStoryBtn()" id="btn_write" disabled>&#9997; Escribir borrador</button>
+<button class="sec" onclick="saveDraft()" id="btn_savedraft" disabled>&#128190; Guardar cambios</button>
+<button onclick="processStory()" id="btn_process" disabled>&#9989; Aprobar y procesar todo</button>
+<span class="wc" id="wc_draft"></span></div>
+<textarea id="draft" class="story-edit" placeholder="(sin borrador)"></textarea>
+
+<div class="step">PASO 4 &middot; Ba&uacute;l de editados (cloud)</div>
+<p class="help">Cada modelo guarda su propia versi&oacute;n. Pesta&ntilde;as para comparar.</p>
+<div class="row"><select id="editmodel" style="flex:1"></select>
+<button class="sec" onclick="editStory()" id="btn_edit" disabled>&#10024; Editar</button></div>
+<div class="row" id="edtabs"></div>
+<div class="row"><span class="wc" id="wc_edited"></span></div>
+<pre id="edited">(sin ediciones)</pre>
+
+<div class="step">PASO 5 &middot; Lector infantil + Pulido &rarr; FINAL &mdash; editable</div>
+<p class="help">Un lector de 7-9 a&ntilde;os interroga el cuento editado; lo que no cierre se pule (2 rondas). El FINAL es lo que va al EPUB; pod&eacute;s retocarlo a mano y guardar.</p>
+<div class="row">
+<button class="sec" onclick="polishStory()" id="btn_polish" disabled>&#129504; Revisar y pulir</button>
+<button class="sec" onclick="saveFinal()" id="btn_savefinal" disabled>&#128190; Guardar FINAL</button>
+<span class="wc" id="wc_final"></span></div>
+<pre id="polishlog" style="display:none;font-family:monospace;font-size:12px;color:#ffd479"></pre>
+<textarea id="final" class="story-edit" placeholder="(sin version final)"></textarea>
+</section>
+</main>
+
+<main id="v_logs" style="display:none;grid-template-columns:1fr">
+<section>
+<div class="step">Registro del pipeline</div>
+<p class="help">Cada llamada a un agente queda registrada: duraci&oacute;n, palabras y detalle. Filtr&aacute; por nivel para ver solo problemas. Archivo completo: ~/kdp/logs/pipeline.log</p>
+<div class="row">
+<select id="log_level" style="max-width:160px" onchange="loadLogs()"><option value="">Todos</option><option value="WARN">Solo WARN</option><option value="ERROR">Solo ERROR</option></select>
+<button class="sec" onclick="loadLogs()">&#8635; Actualizar</button>
+</div>
+<div id="logbox" style="font-family:monospace;font-size:12px"></div>
+</section>
+</main>
+<main id="v_bags" style="display:none;grid-template-columns:1fr">
+<section>
+<div class="step">Bolsas de elementos</div>
+<p class="help">Simples: un elemento por l&iacute;nea. Perfiles (*_profiles): <b>Animal | rol | rasgo1, rasgo2</b>. Reglas: clave: valor. Afectan specs generadas DESPU&Eacute;S de guardar. Libros en espa&ntilde;ol usan config_bags_es.yaml (SSH).</p>
+<div id="bagsbox"></div>
+<div class="row"><input id="newbag" placeholder="nueva bolsa" style="max-width:250px"><button onclick="addBag()">Agregar</button>
+<button onclick="saveBags()">&#128190; Guardar todo</button></div>
+</section>
+</main>
+<div id="toast"></div>
+<script>
+let cur={slug:null,story:null},bags={},aborter=null,editions={},curTab=null,prog={drafts:[],edited:{},finals:[]},nstories=0;
+const THINKING_MODELS=['qwen3'];
+const $=id=>document.getElementById(id);
+const st=t=>{$('status').textContent=t};
+const wc=t=>t&&t.trim()?t.trim().split(/\s+/).length+' palabras':'';
+function toast(t){const e=$('toast');e.textContent=t;e.style.display='block';setTimeout(()=>{e.style.display='none'},4000)}
+function tab(t){['books','bags','logs'].forEach(x=>{$('v_'+x).style.display=(x===t)?'grid':'none';$('tb_'+x).className=(x===t)?'act':''});if(t==='bags')loadBags();if(t==='logs')loadLogs()}
+async function j(u,o){const r=await fetch(u,o);if(!r.ok){const e=await r.text();toast('Error: '+e);throw new Error(e)}return r.json()}
+function isThinking(n){return THINKING_MODELS.some(t=>n.startsWith(t)&&!n.includes('cloud'))}
+function shortTag(t){return t.replace('_cloud','').replace('-code','')}
+async function loadModels(){
+  const d=await j('/api/models');
+  const loc=d.models.filter(m=>!m.name.includes('cloud')&&!m.name.includes('embed')&&!m.name.includes('flux')&&!m.name.includes('vl')&&!isThinking(m.name));
+  const cld=d.models.filter(m=>m.name.includes('cloud'));
+  $('nb_local').innerHTML=loc.map(m=>'<option '+(m.name==='qwen2.5:3b'?'selected':'')+'>'+m.name+'</option>').join('');
+  $('nb_cloud').innerHTML=cld.map(m=>'<option '+(m.name==='minimax-m2.5:cloud'?'selected':'')+'>'+m.name+'</option>').join('');
+  $('editmodel').innerHTML=cld.map(m=>'<option '+(m.name==='minimax-m2.5:cloud'?'selected':'')+'>'+m.name+'</option>').join('');
+  $('buildtag').innerHTML='<option value="">(auto: final/editado/borrador)</option>'+cld.map(m=>{const t=m.name.replace(/[:\/]/g,'_');return '<option value="'+t+'">Forzar editados por '+m.name+'</option>'}).join('');
+}
+async function loadBooks(){
+  const d=await j('/api/books');
+  $('booklist').innerHTML=d.map(b=>
+    '<div class="book '+(b.slug===cur.slug?'sel':'')+'" onclick="selBook(\''+b.slug+'\')">'+
+    '<div class="t">&#128213; '+b.title+' <button class="danger" style="float:right;padding:2px 8px" onclick="event.stopPropagation();delBook(\''+b.slug+'\')">&#128465;</button></div>'+
+    '<div class="meta">Idioma: '+b.language.toUpperCase()+' &middot; '+b.stories+' cuentos &times; '+b.words_per_story+'w</div>'+
+    '<div class="meta">Local: '+b.model_local+' &middot; Cloud: '+b.model_cloud+'</div>'+
+    '<div class="meta">&#128221; '+b.written+'/'+b.stories+' borradores &middot; &#10024; '+b.edited+' ediciones'+(b.has_epub?' &middot; <span class="badge ok">EPUB listo</span>':'')+'</div>'+
+    '</div>'
+  ).join('')||'<i class="help">Sin libros. Cre&aacute; el primero abajo.</i>';
+}
+async function delBook(s){
+  if(!confirm('Eliminar "'+s+'" con TODO su contenido? No se puede deshacer.'))return;
+  await j('/api/books/'+s,{method:'DELETE'});
+  if(cur.slug===s){cur={slug:null,story:null};$('stories').innerHTML='';$('st_title').textContent='\u2014';updateProgress()}
+  toast('Libro eliminado');loadBooks();
+}
+async function createBook(){
+  if(!$('nb_title').value.trim()){toast('Pon\u00e9 un t\u00edtulo');return}
+  await j('/api/books',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({title:$('nb_title').value,language:$('nb_lang').value,
+      stories:$('nb_n').value,words_per_story:$('nb_w').value,
+      model_local:$('nb_local').value,model_cloud:$('nb_cloud').value})});
+  toast('Libro creado. Paso 2: Generar specs');$('nb_title').value='';loadBooks();
+}
+async function selBook(s){cur.slug=s;cur.story=null;$('st_title').textContent='\uD83D\uDCD5 '+s;
+  ['btn_outline','btn_writeall','btn_build','btn_report','btn_genall'].forEach(b=>{$(b).disabled=false});loadBooks();await loadStories();updateProgress()}
+async function refreshProgress(){
+  if(!cur.slug)return;
+  prog=await j('/api/books/'+cur.slug+'/progress').catch(_=>({drafts:[],edited:{},finals:[]}));
+}
+function updateProgress(){
+  if(!cur.slug||!nstories){$('pb_book').textContent='Sin libro seleccionado';$('pb_fill').style.width='0%';$('pb_pct').textContent='0%';$('pb_detail').textContent='';return}
+  const dr=prog.drafts.length, ed=Object.keys(prog.edited).length, fi=(prog.finals||[]).length;
+  const pct=Math.round(100*(dr+ed+fi)/(nstories*3));
+  $('pb_book').textContent='\uD83D\uDCD5 '+cur.slug;
+  $('pb_fill').style.width=pct+'%';$('pb_pct').textContent=pct+'%';
+  let stage='Etapa: specs';
+  if(fi>=nstories)stage='Etapa: COMPLETO \u2014 generar EPUB';
+  else if(fi>0)stage='Etapa: pulido final ('+fi+'/'+nstories+')';
+  else if(ed>0)stage='Etapa: edici\u00f3n cloud ('+ed+'/'+nstories+')';
+  else if(dr>0)stage='Etapa: borradores ('+dr+'/'+nstories+')';
+  $('pb_detail').textContent='\uD83D\uDCDD '+dr+'/'+nstories+' \u00b7 \u2728 '+ed+'/'+nstories+' \u00b7 \uD83C\uDFC6 '+fi+'/'+nstories+' \u00b7 '+stage;
+}
+function storyBadges(n){
+  let h='';
+  const bad=(prog.drafts_bad||[]).includes(n);
+  if(prog.drafts.includes(n))h+=' <span class="badge '+(bad?'':'mid')+'" style="'+(bad?'background:#a33':'')+'">&#128221;'+(bad?' \u26a0':'')+'</span>';
+  const tags=prog.edited[n]||prog.edited[String(n)]||[];
+  for(const t of tags)h+=' <span class="badge ok">&#10024; '+shortTag(t)+'</span>';
+  if((prog.finals||[]).includes(n))h+=' <span class="badge ok">&#127942; FINAL</span>';
+  return h;
+}
+async function loadStories(){
+  try{
+    const d=await j('/api/books/'+cur.slug+'/outline');
+    window._outline=d;nstories=d.stories.length;
+    await refreshProgress();
+    $('stories').innerHTML=d.stories.map(x=>'<div class="story'+(x.number===cur.story?' sel':'')+'" id="s'+x.number+'" onclick="selStory('+x.number+')">'+x.number+'. '+x.protagonist+' '+x.name+' &mdash; '+x.goal+'<span id="m'+x.number+'">'+storyBadges(x.number)+'</span></div>').join('');
+    updateProgress();
+  }catch(e){$('stories').innerHTML='<i class="help">Sin specs. Apret\u00e1 "Generar specs".</i>';nstories=0;updateProgress()}
+}
+async function refreshBadges(){
+  await refreshProgress();
+  if(window._outline)for(const s of window._outline.stories){const el=$('m'+s.number);if(el)el.innerHTML=storyBadges(s.number)}
+  updateProgress();
+}
+function renderEdTabs(){
+  const keys=Object.keys(editions);
+  if(!keys.length){$('edtabs').innerHTML='';$('edited').textContent='(sin ediciones)';$('wc_edited').textContent='';return}
+  if(!curTab||!editions[curTab])curTab=keys[0];
+  $('edtabs').innerHTML=keys.map(k=>'<button class="'+(k===curTab?'act':'')+'" onclick="showEd(\''+k+'\')">'+shortTag(k)+'</button>').join('');
+  $('edited').textContent=editions[curTab];
+  $('wc_edited').textContent=wc(editions[curTab]);
+}
+function showEd(k){curTab=k;renderEdTabs()}
+async function selStory(n){
+  cur.story=n;
+  document.querySelectorAll('#stories .story').forEach(e=>e.classList.remove('sel'));
+  const se=$('s'+n);if(se)se.classList.add('sel');
+  $('ed_title').textContent='Cuento '+n;
+  ['btn_write','btn_edit','btn_polish','btn_savespec','btn_savedraft','btn_savefinal','btn_process'].forEach(b=>{$(b).disabled=false});
+  const s=window._outline.stories.find(x=>x.number===n);
+  renderSpecForm(s);
+  const d=await j('/api/books/'+cur.slug+'/story/'+n);
+  $('draft').value=d.draft||'';
+  $('wc_draft').textContent=wc(d.draft);
+  editions=d.edited||{};curTab=null;renderEdTabs();
+  $('final').value=d.final||'';
+  $('wc_final').textContent=wc(d.final);
+  $('polishlog').style.display='none';
+}
+async function genOutline(){
+  if(!cur.slug){toast('Primero selecciona un libro');return}
+  if(window._outline&&!confirm('Ya hay specs. Regenerar? Se pierden cambios manuales de specs (borradores NO se borran).'))return;
+  st('Generando specs...');
+  await j('/api/books/'+cur.slug+'/outline',{method:'POST'});
+  st('');toast('Specs listas. Revisalas y escrib\u00ed los borradores');loadStories();
+}
+function cancelGen(){if(aborter){aborter.abort();aborter=null;st('');$('btn_cancel').style.display='none';toast('Cancelado')}}
+async function streamTo(url,setter){
+  st('\u23F3 Generando... (texto en vivo)');$('btn_cancel').style.display='inline-block';
+  aborter=new AbortController();let acc='';
+  try{
+    const r=await fetch(url,{method:'POST',signal:aborter.signal});
+    if(!r.ok){toast('Error: '+await r.text());return ''}
+    const rd=r.body.getReader();const dec=new TextDecoder();
+    while(true){const{done,value}=await rd.read();if(done)break;acc+=dec.decode(value);setter(acc)}
+  }catch(e){if(e.name!=='AbortError')toast('Error: '+e.message)}
+  finally{st('');$('btn_cancel').style.display='none';aborter=null;refreshBadges()}
+  return acc;
+}
+async function writeStoryBtn(){
+  if(!cur.story){toast('Selecciona un cuento');return}
+  if($('draft').value.length>50&&!confirm('Ya hay un borrador. Regenerarlo? Se pierde el actual (incluidos tus cambios manuales).'))return;
+  const b=$('btn_write');const o=b.innerHTML;b.disabled=true;b.innerHTML='\u23F3 Escribiendo...';
+  try{
+    await streamTo('/api/books/'+cur.slug+'/write/'+cur.story,t=>{$('draft').value=t;$('wc_draft').textContent=wc(t)});
+    await selStory(cur.story);
+  }finally{b.disabled=false;b.innerHTML=o}
+}
+async function saveDraft(){
+  if(!cur.story)return;
+  await j('/api/books/'+cur.slug+'/story/'+cur.story+'/draft',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:$('draft').value})});
+  $('wc_draft').textContent=wc($('draft').value);
+  toast('Borrador guardado. Ahora pod\u00e9s editarlo con cloud (Paso 4).');refreshBadges();
+}
+async function editStory(){
+  if(!cur.story){toast('Selecciona un cuento');return}
+  const b=$('btn_edit');const o=b.innerHTML;b.disabled=true;b.innerHTML='\u23F3 Editando...';
+  try{
+    await streamTo('/api/books/'+cur.slug+'/edit/'+cur.story+'?model='+encodeURIComponent($('editmodel').value),t=>{$('edited').textContent=t;$('wc_edited').textContent=wc(t)});
+    const d=await j('/api/books/'+cur.slug+'/story/'+cur.story);
+    editions=d.edited||{};curTab=$('editmodel').value.replace(/[:\/]/g,'_');renderEdTabs();
+  }finally{b.disabled=false;b.innerHTML=o}
+}
+async function polishStory(){
+  if(!cur.story){toast('Selecciona un cuento');return}
+  const b=$('btn_polish');const o=b.innerHTML;b.disabled=true;b.innerHTML='\u23F3 Revisando...';
+  $('polishlog').style.display='block';$('polishlog').textContent='';
+  try{
+    await streamTo('/api/books/'+cur.slug+'/polish/'+cur.story,t=>{
+      const cut=t.lastIndexOf('##');
+      if(cut>=0){$('polishlog').textContent=t.slice(0,cut);$('final').value=t.slice(cut)}
+      else{$('polishlog').textContent=t}
+      $('wc_final').textContent=wc($('final').value);
+    });
+    const d=await j('/api/books/'+cur.slug+'/story/'+cur.story);
+    if(d.final){$('final').value=d.final;$('wc_final').textContent=wc(d.final)}
+  }finally{b.disabled=false;b.innerHTML=o}
+}
+async function processStory(){
+  if(!cur.story){toast('Selecciona un cuento');return}
+  if(!confirm('Aprobar este borrador y correr automaticamente: 1) Edicion cloud 2) Consistencia de mundo 3) Lector infantil + pulido. El resultado va a FINAL. Continuar?'))return;
+  const b=$('btn_process');const o=b.innerHTML;b.disabled=true;b.innerHTML='\u23F3 Procesando...';
+  $('polishlog').style.display='block';$('polishlog').textContent='';
+  try{
+    await streamTo('/api/books/'+cur.slug+'/process/'+cur.story+'?model='+encodeURIComponent($('editmodel').value),t=>{
+      const cut=t.lastIndexOf('##');
+      if(cut>=0){$('polishlog').textContent=t.slice(0,cut);$('final').value=t.slice(cut);$('wc_final').textContent=wc($('final').value)}
+      else{$('polishlog').textContent=t}
+    });
+    await selStory(cur.story);
+  }finally{b.disabled=false;b.innerHTML=o}
+}
+async function saveFinal(){
+  if(!cur.story)return;
+  await j('/api/books/'+cur.slug+'/story/'+cur.story+'/final',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:$('final').value})});
+  $('wc_final').textContent=wc($('final').value);
+  toast('FINAL guardado. Este texto va al EPUB.');refreshBadges();
+}
+async function writeAll(){
+  if(!cur.slug){toast('Selecciona un libro');return}
+  if(!window._outline){toast('Primero genera las specs');return}
+  if(!confirm('Escribe todos los cuentos sin borrador, uno por uno. Puede tardar. Continuar?'))return;
+  await refreshProgress();
+  const have=new Set(prog.drafts);
+  aborter=new AbortController();$('btn_cancel').style.display='inline-block';
+  const b=$('btn_writeall');b.disabled=true;
+  try{
+    for(const s of window._outline.stories){
+      if(have.has(s.number))continue;
+      st('\u23F3 Cuento '+s.number+' de '+nstories+'...');
+      const r=await fetch('/api/books/'+cur.slug+'/write/'+s.number,{method:'POST',signal:aborter.signal});
+      await r.text();await refreshBadges();
+    }
+    toast('Borradores listos.');
+  }catch(e){if(e.name!=='AbortError')toast('Error: '+e.message)}
+  finally{st('');$('btn_cancel').style.display='none';aborter=null;b.disabled=false}
+}
+const SPEC_LABELS={protagonist:'Protagonista',name:'Nombre',traits:'Rasgos',setting:'Escenario',goal:'Objetivo',problem:'Problema',helper:'Ayudante',object:'Objeto especial',emotion:'Emoci\u00f3n',solution:'Soluci\u00f3n',ending:'Final',moral:'Moraleja',word_target:'Palabras objetivo',twist:'Giro',weather:'Clima',celebration:'Celebraci\u00f3n',companion:'Compa\u00f1ero',time_of_day:'Momento del d\u00eda',season:'Estaci\u00f3n',antagonist:'Antagonista',reward:'Recompensa'};
+function renderSpecForm(sp){
+  window._curspec=sp;
+  let h='';
+  for(const[k,v]of Object.entries(sp)){
+    if(k==='number')continue;
+    const lbl=SPEC_LABELS[k]||k;
+    const typ=(typeof v==='number')?'number':'text';
+    h+='<label>'+lbl+'</label><input data-k="'+k+'" type="'+typ+'" value="'+String(v).replace(/"/g,'&quot;')+'">';
+  }
+  $('specform').innerHTML=h;
+}
+async function saveSpec(){
+  const sp={...window._curspec};
+  document.querySelectorAll('#specform input').forEach(el=>{
+    const k=el.dataset.k;
+    sp[k]=(el.type==='number')?Number(el.value):el.value;
+  });
+  const i=window._outline.stories.findIndex(x=>x.number===sp.number);
+  window._outline.stories[i]=sp;
+  await fetch('/api/books/'+cur.slug+'/outline',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(window._outline)});
+  await loadStories();await selStory(sp.number);
+  toast('Spec guardada. Regener\u00e1 el borrador para aplicarla.');
+}
+async function generateAll(){
+  if(!cur.slug){toast('Selecciona un libro');return}
+  if(!window._outline){toast('Primero genera las specs');return}
+  if(!confirm('Genera TODO el libro de punta a punta (borrador -> edicion -> mundo -> lector/pulido) por cada cuento. Puede tardar. Continuar?'))return;
+  const b=$('btn_genall');const o=b.innerHTML;b.disabled=true;b.innerHTML='\u23F3 Generando libro...';
+  $('genall_log').style.display='block';$('genall_log').textContent='';
+  aborter=new AbortController();$('btn_cancel').style.display='inline-block';
+  try{
+    const r=await fetch('/api/books/'+cur.slug+'/generate_all',{method:'POST',signal:aborter.signal});
+    const rd=r.body.getReader();const dec=new TextDecoder();
+    while(true){const{done,value}=await rd.read();if(done)break;$('genall_log').textContent+=dec.decode(value);$('genall_log').scrollTop=$('genall_log').scrollHeight}
+    await loadStories();
+  }catch(e){if(e.name!=='AbortError')toast('Error: '+e.message)}
+  finally{b.disabled=false;b.innerHTML=o;$('btn_cancel').style.display='none';aborter=null;toast('Proceso terminado. Revisa el resumen antes del EPUB.')}
+}
+async function genReport(){
+  if(!cur.slug){toast('Selecciona un libro');return}
+  st('Generando log del libro...');
+  await j('/api/books/'+cur.slug+'/report',{method:'POST'});
+  $('dlreport').style.display='inline';$('dlreport').href='/api/books/'+cur.slug+'/report';
+  st('');toast('Log generado. Documenta cada cuento de punta a punta.');
+}
+async function buildEpub(){
+  if(!cur.slug){toast('Selecciona un libro');return}
+  st('Generando EPUB...');
+  const tag=$('buildtag').value;
+  await j('/api/books/'+cur.slug+'/build'+(tag?'?editor_tag='+encodeURIComponent(tag):''),{method:'POST'});
+  $('dl').style.display='inline';$('dl').href='/api/books/'+cur.slug+'/epub';
+  st('');toast('EPUB listo. Descargalo y subilo manual a KDP (declarando IA).');loadBooks();
+}
+async function loadBags(){bags=await j('/api/bags');renderBags()}
+function isProfileBag(k){return k.endsWith('_profiles')}
+function profToLine(p){if(typeof p==='string')return p;return (p.animal||'')+' | '+(p.role||'')+' | '+((p.traits||[]).join(', '))}
+function lineToProf(l){const parts=l.split('|').map(s=>s.trim());return {animal:parts[0]||'',role:parts[1]||'hero',traits:(parts[2]||'').split(',').map(s=>s.trim()).filter(Boolean)}}
+function renderBags(){
+  $('bagsbox').innerHTML=Object.entries(bags).map(([k,v])=>{
+    let txt,info;
+    if(isProfileBag(k)&&Array.isArray(v)){txt=v.map(profToLine).join('\n');info=v.length+' perfiles'}
+    else if(Array.isArray(v)){txt=v.join('\n');info=v.length+' elementos'}
+    else{txt=Object.entries(v).map(([a,b])=>a+': '+(Array.isArray(b)?'['+b.join(', ')+']':b)).join('\n');info='reglas'}
+    return '<div class="bag"><b>'+k+'</b> <span class="badge">'+info+'</span> <button class="sec" onclick="delBag(\''+k+'\')">&#128465;</button><textarea rows="4" id="bag_'+k+'">'+txt+'</textarea></div>';
+  }).join('');
+}
+function addBag(){const n=$('newbag').value.trim();if(!n)return;loadBagsFromDom();bags[n]=[];$('newbag').value='';renderBags()}
+function delBag(k){if(!confirm('Borrar la bolsa '+k+'?'))return;loadBagsFromDom();delete bags[k];renderBags()}
+function loadBagsFromDom(){
+  for(const k of Object.keys(bags)){
+    const el=$('bag_'+k);if(!el)continue;
+    const txt=el.value;
+    if(isProfileBag(k)){bags[k]=txt.split('\n').map(s=>s.trim()).filter(Boolean).map(lineToProf)}
+    else if(Array.isArray(bags[k])){bags[k]=txt.split('\n').map(s=>s.trim()).filter(Boolean)}
+    else{
+      const o={};
+      txt.split('\n').forEach(l=>{const i=l.indexOf(':');if(i>0){let v=l.slice(i+1).trim();if(v.startsWith('['))v=v.slice(1,-1).split(',').map(s=>s.trim());o[l.slice(0,i).trim()]=v}});
+      bags[k]=o;
+    }
+  }
+}
+async function saveBags(){
+  loadBagsFromDom();
+  await j('/api/bags',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(bags)});
+  toast('Bolsas guardadas. Afectan a las pr\u00f3ximas specs.');
+}
+async function loadLogs(){
+  const lv=$('log_level').value;
+  const d=await j('/api/logs?n=200'+(lv?'&level='+lv:'')+(cur.slug?'&slug='+cur.slug:''));
+  const col={INFO:'#8a8fa3',WARN:'#ffd479',ERROR:'#ff7a7a'};
+  $('logbox').innerHTML=d.map(e=>'<div style="color:'+(col[e.level]||'#ddd')+';border-bottom:1px solid #222;padding:3px 0">'
+    +e.ts+' ['+e.level+'] '+e.slug+' st'+String(e.story).padStart(3,'0')+' <b>'+e.agent+'</b>/'+e.model
+    +' '+e.elapsed+'s out='+e.words_out+'w '+(e.detail?('&mdash; '+e.detail):'')+'</div>').join('')||'<i class="help">Sin eventos a&uacute;n.</i>';
+}
+async function showVersion(){try{const v=await j('/api/version');const el=document.createElement('div');el.style.cssText='position:fixed;bottom:2px;left:6px;font-size:10px;color:#555;z-index:9';el.textContent='build '+v.commit;document.body.appendChild(el)}catch(e){}}
+loadModels();loadBooks();showVersion();
+</script></body></html>

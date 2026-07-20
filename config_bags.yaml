@@ -1,0 +1,63 @@
+protagonist: [Rabbit, Bear, Fox, Cat, Dog, Mouse, Owl, Penguin, Turtle, Elephant, Lion, Monkey, Giraffe, Panda, Koala, Squirrel, Hedgehog, Duck, Robot, Dragon]
+name: [Emma, Olivia, Sophia, Ava, Mia, Lily, Lucy, Ella, Ruby, Chloe, Liam, Noah, Lucas, Leo, Oliver, Jack, Henry, Finn, Theo, Charlie]
+setting: [Forest, Beach, Mountain, Village, Farm, Castle, School, Jungle, Arctic, Desert, Lake, River, Garden, Treehouse, Cave, Space Station, Moon, Rainbow Valley, Crystal Island, Snowy Forest]
+goal: [Find a lost toy, Make a new friend, Help a neighbor, Return home, Discover a secret place, Learn to fly, Win a friendly contest, Deliver a gift, Find a treasure, Plant a magical seed, Save a celebration, Learn a new skill, Rescue a baby animal, Build something special, Follow a mysterious map, Collect colorful shells, Find a missing star, Bake a birthday cake, Prepare a surprise party, Explore the unknown]
+problem: [A storm begins, The path disappears, A bridge breaks, A map is lost, The lights go out, A river rises, A strong wind blows, Thick fog appears, A gate is locked, A wheel gets stuck, A balloon floats away, A basket falls, A trail becomes confusing, Snow covers the tracks, A cave becomes dark, A kite gets tangled, A clock stops working, A boat drifts away, A door will not open, A friend cannot be found]
+helper: [Wise Owl, Friendly Fox, Kind Turtle, Brave Lion, Gentle Elephant, Clever Monkey, Happy Dolphin, Tiny Mouse, Colorful Parrot, Busy Beaver, Cheerful Penguin, Magic Fairy, Friendly Wizard, Helpful Robot, Grandma, Grandpa, Forest Ranger, Unicorn, Little Dragon, Firefly]
+obstacle: [A deep river, A steep hill, A dark cave, A tangled forest, A giant maze, A slippery path, A broken bridge, A field of thorns, A snowy mountain, A hot desert, A narrow tunnel, A rocky cliff, A frozen lake, A windy canyon, A fallen tree, A muddy trail, A high wall, A rushing waterfall, A giant spider web, A hidden passage]
+object: [Golden Key, Magic Map, Crystal Compass, Shining Lantern, Rainbow Feather, Silver Bell, Enchanted Rope, Magic Backpack, Star Necklace, Lucky Coin, Golden Acorn, Moon Crystal, Tiny Telescope, Whispering Shell, Magic Paintbrush, Dream Pillow, Treasure Chest, Flying Carpet, Invisible Cloak, Seed of Hope]
+emotion: [Curious, Brave, Nervous, Excited, Happy, Lonely, Proud, Hopeful, Confused, Determined, Calm, Thankful, Patient, Kind, Caring, Surprised, Confident, Gentle, Playful, Thoughtful]
+solution: [Worked together, Asked for help, Stayed calm, Used creativity, Never gave up, Shared with others, Solved a puzzle, Followed the clues, Told the truth, Showed kindness, Listened carefully, Practiced every day, Trusted a friend, Believed in themselves, Used the special object wisely, Made a clever plan, Learned from a mistake, Helped someone first, Took one small step at a time, Used courage]
+antagonist: [Grumpy Troll, Sneaky Fox, Mischievous Monkey, Silly Goblin, Storm Cloud, Strong Wind, Ice Giant, Sleepy Dragon, Tricky Crow, Greedy Pirate, Shadow Monster, Giant Octopus, Hungry Wolf, Thorn Monster, Dust Devil, Naughty Raccoon, Broken Robot, Wild Vines, Giant Wave, Magical Mist]
+companion: [Best Friend, Little Sister, Little Brother, Cousin, Puppy, Kitten, Baby Bird, Bunny, Teddy Bear, Robot Friend, Baby Dragon, Unicorn, Butterfly, Squirrel, Hedgehog, Duckling, Turtle, Penguin, Fox Cub, Fawn]
+time_of_day: [Early Morning, Morning, Noon, Afternoon, Sunset, Evening, Twilight, Night, Midnight, Dawn]
+season: [Spring, Summer, Autumn, Winter, Rainy Season, Snow Season, Harvest Season, Flower Season]
+weather: [Sunny, Cloudy, Windy, Rainy, Snowy, Foggy, Stormy, Rainbow After Rain, Breezy, Warm, Cold, Frosty, Drizzly, Clear Sky, Starry Night]
+twist: [The treasure is empty, The map was upside down, The monster is friendly, The lost item was at home, The helper knew the secret, The cave hides a garden, The key opens a different door, The dragon loves music, The bridge repairs itself, The storm suddenly stops, A new friend appears, The old legend is true, The star falls from the sky, The river changes direction, The flower begins to glow, The castle comes alive, The toy starts talking, The tree reveals a secret, The compass points to kindness, The journey was the real treasure]
+reward: [A gold medal, A shiny star, A friendship bracelet, A treasure chest, A magic feather, A crystal crown, A colorful kite, A happy memory, A golden leaf, A rainbow ribbon, A special book, A magic seed, A wooden badge, A tiny crown, A new backpack, A silver whistle, A lucky stone, A glowing crystal, A basket of fruit, A surprise gift]
+celebration: [Picnic, Birthday Party, Dance Festival, Music Concert, Family Dinner, Campfire Night, Parade, Tea Party, Beach Party, Forest Festival, Balloon Festival, Fireworks Show, Cookie Party, Story Time, Garden Celebration, Welcome Home Party, Harvest Festival, Snow Festival, Lantern Festival, Friendship Day]
+ending: [Returned home happily, Made a lifelong friend, Learned something new, Became a local hero, Started a new adventure, Found a new home, Shared the treasure, Reunited with family, Saved the village, Built a wonderful playground, Opened a little library, Planted a magical garden, Earned everyone's respect, Inspired the community, Solved every mystery, Fulfilled a dream, Smiled all the way home, Watched the sunset together, Promised to meet again, Lived happily ever after]
+moral: [Friendship is priceless, Kindness changes everything, Never give up, Teamwork makes difficult things easier, Honesty always wins, Everyone has special talents, Sharing brings happiness, Courage grows little by little, Helping others helps everyone, Patience brings good results, Mistakes help us learn, Family is always important, Love is stronger than fear, Curiosity leads to discovery, Small acts can make a big difference, Believe in yourself, Every problem has a solution, Being different is wonderful, Listening is a superpower, Dreams come true with effort]
+trait: [Brave, Curious, Kind, Funny, Clever, Shy, Friendly, Adventurous, Creative, Patient, Generous, Honest, Playful, Helpful, Calm, Energetic, Imaginative, Responsible, Gentle, Determined, Cheerful, Thoughtful, Confident, Polite, Wise]
+activity: [Painting pictures, Singing songs, Dancing, Reading books, Building things, Exploring nature, Flying kites, Planting flowers, Baking cookies, Collecting stones, Watching stars, Playing games, Swimming, Riding a bicycle, Making crafts, Taking photographs, Telling stories, Playing music, Gardening, Helping animals, Learning new things, Fishing, Stargazing, Solving puzzles, Playing with friends]
+food: [Apple pie, Chocolate cake, Strawberry ice cream, Pancakes, Cookies, Sandwiches, Pizza, Fruit salad, Honey toast, Cupcakes, Cheese crackers, Blueberry muffins, Banana bread, Popcorn, Carrot cake, Rainbow cupcakes, Vegetable soup, Strawberry yogurt, Jelly sandwiches, Honey cookies, Apple slices, Berry pancakes, Warm cocoa, Pumpkin pie, Fresh fruit]
+edu_theme: [Friendship, Colors, Numbers, Letters, Shapes, Animals, Nature, Seasons, Weather, Emotions, Teamwork, Sharing, Respect, Creativity, Problem solving, Healthy habits, Recycling, Space, Science, Music, Art, Plants, Families, Different cultures, Safety]
+genre: [Adventure Story, Bedtime Story, Funny Story, Fairy Tale, Animal Story, Mystery Story, Fantasy Story, Friendship Story, Learning Story, Magical Adventure, Space Adventure, Nature Story, Farm Story, Ocean Adventure, Treasure Hunt, Holiday Story, Travel Story, Robot Adventure, Dream Story, Feel-Good Story]
+
+# Reglas de coherencia
+compat_setting:
+  Penguin: [Arctic, Snowy Forest, Beach, Lake]
+  Turtle: [Beach, Lake, River, Garden, Crystal Island]
+  Duck: [Lake, River, Farm, Garden, Beach]
+  Robot: [Space Station, Moon, School, Village, Castle]
+  Monkey: [Jungle, Forest, Treehouse]
+  Koala: [Forest, Treehouse, Garden]
+  Panda: [Forest, Mountain, Snowy Forest]
+  Lion: [Desert, Jungle, Mountain]
+  Camel: [Desert]
+moral_by_solution:
+  Worked together: Teamwork makes difficult things easier
+  Asked for help: Helping others helps everyone
+  Stayed calm: Patience brings good results
+  Never gave up: Never give up
+  Shared with others: Sharing brings happiness
+  Showed kindness: Kindness changes everything
+  Told the truth: Honesty always wins
+  Trusted a friend: Friendship is priceless
+  Believed in themselves: Believe in yourself
+  Learned from a mistake: Mistakes help us learn
+  Used courage: Courage grows little by little
+  Practiced every day: Dreams come true with effort
+  Listened carefully: Listening is a superpower
+protagonist_profiles:
+  - {animal: Bear, role: hero, traits: [kind, gentle, honest]}
+  - {animal: Rabbit, role: hero, traits: [curious, playful, brave]}
+  - {animal: Fox, role: hero, traits: [clever, helpful, cheerful]}
+  - {animal: Owl, role: hero, traits: [wise, patient, calm]}
+  - {animal: Penguin, role: hero, traits: [determined, friendly, funny]}
+  - {animal: Robot, role: hero, traits: [creative, responsible, thoughtful]}
+antagonist_profiles:
+  - {animal: Grumpy Troll, role: villain, traits: [grumpy, selfish]}
+  - {animal: Sneaky Fox, role: antihero, traits: [tricky, mischievous, secretly lonely]}
+  - {animal: Storm Cloud, role: villain, traits: [noisy, impatient]}
+  - {animal: Naughty Raccoon, role: antihero, traits: [greedy, curious, redeemable]}

@@ -1,0 +1,58 @@
+{
+  "stories": [
+    {
+      "number": 1,
+      "protagonist": "Bear",
+      "name": "Noah",
+      "traits": "kind, gentle, honest",
+      "setting": "Arctic",
+      "goal": "Win a friendly contest",
+      "problem": "A gate is locked",
+      "helper": "Happy Dolphin",
+      "object": "Silver Bell",
+      "emotion": "Excited",
+      "solution": "Stayed calm",
+      "ending": "Found a new home",
+      "moral": "Patience brings good results",
+      "word_target": 450,
+      "twist": "The flower begins to glow",
+      "weather": "Windy"
+    },
+    {
+      "number": 2,
+      "protagonist": "Owl",
+      "name": "Jack",
+      "traits": "wise, patient, calm",
+      "setting": "Village",
+      "goal": "Deliver a gift",
+      "problem": "A boat drifts away",
+      "helper": "Grandma",
+      "object": "Seed of Hope",
+      "emotion": "Excited",
+      "solution": "Took one small step at a time",
+      "ending": "Solved every mystery",
+      "moral": "Patience brings good results",
+      "word_target": 450,
+      "celebration": "Balloon Festival",
+      "weather": "Windy"
+    },
+    {
+      "number": 3,
+      "protagonist": "Bear",
+      "name": "Lucy",
+      "traits": "kind, gentle, honest",
+      "setting": "Rainbow Valley",
+      "goal": "Prepare a surprise party",
+      "problem": "The lights go out",
+      "helper": "Friendly Wizard",
+      "object": "Rainbow Feather",
+      "emotion": "Nervous",
+      "solution": "Never gave up",
+      "ending": "Fulfilled a dream",
+      "moral": "Never give up",
+      "word_target": 450,
+      "reward": "A rainbow ribbon",
+      "season": "Spring"
+    }
+  ]
+}

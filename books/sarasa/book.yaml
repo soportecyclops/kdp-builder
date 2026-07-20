@@ -1,0 +1,10 @@
+slug: sarasa
+title: sarasa
+language: en
+niche: children-bedtime
+stories: 3
+words_per_story: 450
+model_local: qwen2.5:3b
+model_cloud: minimax-m2.5:cloud
+seed: 511030
+created: '2026-07-20T03:01:52.419585'
