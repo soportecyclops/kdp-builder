@@ -31,6 +31,9 @@ pre{white-space:pre-wrap;font-family:Georgia,serif;font-size:14px;line-height:1.
 #progressbar{background:#242438;border-radius:8px;padding:6px 12px;display:flex;gap:14px;align-items:center;width:100%;box-sizing:border-box;font-size:12px;margin:0 16px}
 #pb_track{flex:1;height:10px;background:#0e0e0e;border-radius:5px;overflow:hidden;min-width:120px}
 #pb_fill{height:100%;width:0%;background:linear-gradient(90deg,#2d6cdf,#7fdc7f);transition:width .4s}
+.syslog-box{border:1px solid #2a2a3a;border-radius:8px;background:#141420;margin:8px 0;overflow:hidden}
+.syslog-head{background:#1c1c2e;color:#7ec8ff;font-size:12px;padding:6px 10px;font-weight:600}
+.syslog{font-family:monospace;font-size:12px;color:#ffd479;max-height:220px;overflow:auto;margin:0;padding:8px 10px;background:transparent;border:0;border-radius:0}
 #toast{position:fixed;bottom:16px;right:16px;background:#2d6cdf;color:#fff;padding:10px 16px;border-radius:8px;display:none;max-width:420px;z-index:9}
 </style></head><body>
 <header><b>KDP Builder</b>
@@ -75,8 +78,11 @@ Click en un cuento para trabajarlo a la derecha.</p>
 <button class="sec" onclick="writeAll()" id="btn_writeall" disabled>&#9997; Escribir faltantes</button>
 <button onclick="generateAll()" id="btn_genall" disabled>&#9889; Generar libro completo</button>
 </div>
+<div class="syslog-box" id="genall_wrap" style="display:none">
+<div class="syslog-head">&#128220; Registro en vivo <span id="gen_elapsed" style="margin-left:8px;color:#8a8fa3"></span></div>
+<pre id="genall_log" class="syslog"></pre>
+</div>
 <div id="stories"></div>
-<pre id="genall_log" style="display:none;font-family:monospace;font-size:12px;max-height:260px;color:#ffd479"></pre>
 <div class="step">PASO 6 &middot; Libro final (EPUB)</div>
 <p class="help">Prioridad autom&aacute;tica por cuento: FINAL &gt; editado &gt; borrador.</p>
 <div class="row">
@@ -90,10 +96,12 @@ Click en un cuento para trabajarlo a la derecha.</p>
 <section>
 <h3 id="ed_title">&mdash; seleccion&aacute; un cuento &mdash;</h3>
 
-<div class="step">SPEC (ingredientes) &mdash; edit&aacute; ANTES de escribir</div>
+<details id="spec_details">
+<summary style="cursor:pointer;color:#7ec8ff;font-weight:600;padding:4px 0">&#9881; Ver/editar ingredientes (SPEC)</summary>
 <p class="help">Cambi&aacute; cualquier campo y "Guardar spec". El borrador se genera desde esta spec.</p>
 <div id="specform"></div>
 <div class="row"><button class="sec" onclick="saveSpec()" id="btn_savespec" disabled>&#128190; Guardar spec</button></div>
+</details>
 
 <div class="step">PASO 3 &middot; Borrador (modelo local) &mdash; editable</div>
 <p class="help">"Escribir" genera desde la spec (pisa lo que haya). Pod&eacute;s corregir el texto a mano y "Guardar cambios" antes de editar con cloud.</p>
@@ -263,7 +271,11 @@ async function genOutline(){
   await j('/api/books/'+cur.slug+'/outline',{method:'POST'});
   st('');toast('Specs listas. Revisalas y escrib\u00ed los borradores');loadStories();
 }
-function cancelGen(){if(aborter){aborter.abort();aborter=null;st('');$('btn_cancel').style.display='none';toast('Cancelado')}}
+function cancelGen(){
+  if(aborter){aborter.abort();aborter=null}
+  if(cur.slug){fetch('/api/books/'+cur.slug+'/cancel_generation',{method:'POST'}).catch(()=>{})}
+  st('');$('btn_cancel').style.display='none';toast('Cancelando... puede tardar unos segundos en detenerse del todo');
+}
 async function streamTo(url,setter){
   st('\u23F3 Generando... (texto en vivo)');$('btn_cancel').style.display='inline-block';
   aborter=new AbortController();let acc='';
@@ -376,6 +388,7 @@ async function saveSpec(){
   window._outline.stories[i]=sp;
   await fetch('/api/books/'+cur.slug+'/outline',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(window._outline)});
   await loadStories();await selStory(sp.number);
+  const dtl=$('spec_details'); if(dtl) dtl.open=false;
   toast('Spec guardada. Regener\u00e1 el borrador para aplicarla.');
 }
 async function generateAll(){
@@ -383,15 +396,17 @@ async function generateAll(){
   if(!window._outline){toast('Primero genera las specs');return}
   if(!confirm('Genera TODO el libro de punta a punta (borrador -> edicion -> mundo -> lector/pulido) por cada cuento. Puede tardar. Continuar?'))return;
   const b=$('btn_genall');const o=b.innerHTML;b.disabled=true;b.innerHTML='\u23F3 Generando libro...';
-  $('genall_log').style.display='block';$('genall_log').textContent='';
+  $('genall_wrap').style.display='block';$('genall_log').textContent='';
   aborter=new AbortController();$('btn_cancel').style.display='inline-block';
+  const t0=Date.now();
+  const timer=setInterval(()=>{const el=$('gen_elapsed');if(el)el.textContent=Math.floor((Date.now()-t0)/1000)+'s'},1000);
   try{
     const r=await fetch('/api/books/'+cur.slug+'/generate_all',{method:'POST',signal:aborter.signal});
     const rd=r.body.getReader();const dec=new TextDecoder();
     while(true){const{done,value}=await rd.read();if(done)break;$('genall_log').textContent+=dec.decode(value);$('genall_log').scrollTop=$('genall_log').scrollHeight}
     await loadStories();
   }catch(e){if(e.name!=='AbortError')toast('Error: '+e.message)}
-  finally{b.disabled=false;b.innerHTML=o;$('btn_cancel').style.display='none';aborter=null;toast('Proceso terminado. Revisa el resumen antes del EPUB.')}
+  finally{clearInterval(timer);b.disabled=false;b.innerHTML=o;$('btn_cancel').style.display='none';aborter=null;toast('Proceso terminado. Revisa el resumen antes del EPUB.')}
 }
 async function genReport(){
   if(!cur.slug){toast('Selecciona un libro');return}

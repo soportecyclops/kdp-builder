@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Web UI del pipeline KDP (ES). Servicio: kdp-webui, puerto 8080"""
 import json, shutil, subprocess, time
+import concurrent.futures
 from pathlib import Path
 import httpx, yaml
 from fastapi import FastAPI, HTTPException, Body
@@ -8,6 +9,7 @@ from fastapi.responses import HTMLResponse, StreamingResponse, FileResponse
 import kdp
 
 app = FastAPI()
+CANCEL_SLUGS = set()
 BOOKS, BAGS, PROMPTS, OLLAMA = kdp.BOOKS, kdp.BAGS, kdp.PROMPTS, kdp.OLLAMA
 
 def ollama_stream(model, system, user, temperature=0.7):
@@ -320,36 +322,101 @@ def version():
             "webui_mtime": Path(__file__).stat().st_mtime,
             "kdp_mtime": (Path(__file__).parent / "kdp.py").stat().st_mtime}
 
+@app.post("/api/books/{slug}/cancel_generation")
+def cancel_generation(slug: str):
+    CANCEL_SLUGS.add(slug)
+    return {"ok": True}
+
 @app.post("/api/books/{slug}/generate_all")
 def generate_all(slug: str, model: str = ""):
     d, cfg = kdp.load_book(slug)
     outline = json.loads((d / "02_outline.json").read_text())
     m = model or cfg["model_cloud"]
     total = len(outline["stories"])
+    CANCEL_SLUGS.discard(slug)
+    STORY_TIMEOUT = 900  # process() encadena hasta ~9 llamadas cloud; 600s cortaba de mas
+    HEARTBEAT = 15
+
+    def _run_phase(label, n, fn, *args):
+        # OJO: sin "with" -- el executor NO se cierra aca. Si cerramos (shutdown(wait=True)),
+        # Python bloquea la salida de esta funcion hasta que el hilo real termine,
+        # anulando el timeout (es lo que colgaba antes). Se deja el hilo huerfano
+        # corriendo en 2do plano; termina solo cuando la llamada http real responda o
+        # el timeout de call_ollama (450s) la corte.
+        ex = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        fut = ex.submit(fn, *args)
+        waited = 0
+        try:
+            while True:
+                if slug in CANCEL_SLUGS:
+                    yield f"[{n}] cancelado por el usuario durante {label} (el trabajo en curso puede seguir un rato en 2do plano)\n"
+                    yield ("__CANCELLED__", True)
+                    return
+                try:
+                    result = fut.result(timeout=HEARTBEAT)
+                    yield ("__RESULT__", result)
+                    return
+                except concurrent.futures.TimeoutError:
+                    waited += HEARTBEAT
+                    yield f"[{n}] ... {label} ({waited}s)\n"
+                    if waited >= STORY_TIMEOUT:
+                        yield f"[{n}] TIMEOUT en {label} tras {waited}s (cuento saltado; puede terminar solo en 2do plano sin guardarse)\n"
+                        kdp.event("ERROR", slug, n, "generate_all", m, detail=f"timeout {label} tras {waited}s")
+                        return
+                except Exception as e:
+                    yield f"[{n}] ERROR en {label}: {e}\n"
+                    kdp.event("ERROR", slug, n, "generate_all", m, detail=str(e))
+                    return
+        finally:
+            ex.shutdown(wait=False)
 
     def gen():
         for st in outline["stories"]:
             n = st["number"]
+            if slug in CANCEL_SLUGS:
+                yield f"\n=== Cancelado por el usuario antes del cuento {n} ===\n"
+                CANCEL_SLUGS.discard(slug)
+                return
             yield f"\n=== Cuento {n}/{total}: {st['protagonist']} {st['name']} ===\n"
             draft = d / "stories" / f"st{n:03d}.md"
             needs = (not draft.exists()) or bool(kdp.qc_story(draft.read_text(), st))
+            cancelled = False
             if needs:
                 yield f"[{n}] escribiendo borrador...\n"
-                out, issues = kdp.generate_story(cfg, st, retries=2)
+                holder = {}
+                for item in _run_phase("escribiendo borrador", n, kdp.generate_story, cfg, st, 2):
+                    if isinstance(item, tuple):
+                        if item[0] == "__RESULT__": holder["v"] = item[1]
+                        elif item[0] == "__CANCELLED__": cancelled = True
+                    else:
+                        yield item
+                if cancelled:
+                    CANCEL_SLUGS.discard(slug); return
+                if "v" not in holder:
+                    continue
+                out, issues = holder["v"]
                 if issues:
                     yield f"[{n}] SALTEADO, defectos persistentes: {issues}\n"
                     kdp.event("ERROR", slug, n, "generate_all", cfg["model_local"], detail=issues)
                     continue
                 draft.write_text(out)
+
             yield f"[{n}] procesando (edicion+mundo+lector/pulido)...\n"
-            try:
-                kdp.process(slug, n, m)
+            holder = {}
+            for item in _run_phase("procesando", n, kdp.process, slug, n, m):
+                if isinstance(item, tuple):
+                    if item[0] == "__RESULT__": holder["v"] = item[1]
+                    elif item[0] == "__CANCELLED__": cancelled = True
+                else:
+                    yield item
+            if cancelled:
+                CANCEL_SLUGS.discard(slug); return
+            if "v" in holder:
                 yield f"[{n}] OK -> final/st{n:03d}.md\n"
-            except Exception as e:
-                yield f"[{n}] ERROR en process: {e}\n"
-                kdp.event("ERROR", slug, n, "generate_all", m, detail=str(e))
+
         finals = sorted(int(p.stem[2:]) for p in (d / "final").glob("st*.md"))
         faltan = [s["number"] for s in outline["stories"] if s["number"] not in finals]
+        CANCEL_SLUGS.discard(slug)
         if faltan:
             yield f"\n=== Terminado con FALTANTES: {faltan}. No armes el EPUB todavia. ===\n"
         else:

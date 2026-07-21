@@ -36,7 +36,7 @@ def db():
 def slugify(s):
     return re.sub(r'[^a-z0-9]+', '-', s.lower()).strip('-')[:60]
 
-def call_ollama(model, system, user, temperature=0.7, timeout=1800, seed=None, retries=3, repeat_penalty=None):
+def call_ollama(model, system, user, temperature=0.7, timeout=450, seed=None, retries=2, repeat_penalty=None):
     opts = {"temperature": temperature}
     if seed is not None:
         opts["seed"] = seed
@@ -50,14 +50,14 @@ def call_ollama(model, system, user, temperature=0.7, timeout=1800, seed=None, r
                 "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]})
             if r.status_code >= 500:
                 last = f"HTTP {r.status_code}"
-                time.sleep(3 * (attempt + 1)); continue
+                time.sleep(2 * (attempt + 1)); continue
             r.raise_for_status()
             j = r.json()
             if j.get("error"):
                 raise RuntimeError(j["error"])
             return j["message"]["content"], j.get("eval_count", 0)
         except (httpx.TimeoutException, httpx.ConnectError) as e:
-            last = str(e); time.sleep(3 * (attempt + 1))
+            last = str(e); time.sleep(2 * (attempt + 1))
     raise RuntimeError(f"call_ollama fallo tras {retries} intentos: {last}")
 
 LOGFILE = BASE / "logs" / "pipeline.log"
@@ -283,7 +283,7 @@ def iter_story_segments(cfg, spec, seg_retries=2):
             t0 = time.time()
             seed = (cfg.get("seed", 0) * 1000) + (story * 100) + (i * 10) + attempt
             try:
-                raw, _ = call_ollama(cfg["model_local"], sys_p, payload, temperature=0.6, seed=seed, repeat_penalty=1.3)
+                raw, _ = call_ollama(cfg["model_local"], sys_p, payload, temperature=0.6, seed=seed, repeat_penalty=1.3, timeout=90)
             except Exception as e:
                 event("ERROR", slug, story, f"writer_seg{i+1}", cfg["model_local"],
                       time.time() - t0, detail=f"attempt {attempt+1}: {e}")
