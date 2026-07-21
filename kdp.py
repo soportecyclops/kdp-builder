@@ -365,7 +365,9 @@ def generate_story(cfg, spec, retries=1):
     return last, last_issues
 
 def run_critic(cfg, spec, text, model=None):
-    """Critico semantico con LLM cloud. Devuelve lista de errores (vacia = ok)."""
+    """Critico semantico con LLM cloud. Devuelve lista de errores (vacia = ok).
+    Resiliente a JSON malformado: nunca levanta excepcion, para no perder
+    todo el FINAL del cuento por un error de parseo puntual."""
     m = model or cfg["model_cloud"]
     sys_p = (PROMPTS / "critic.md").read_text()
     payload = json.dumps({"story_spec": spec, "story_text": text})
@@ -374,7 +376,9 @@ def run_critic(cfg, spec, text, model=None):
         j = extract_json(out)
         return j.get("errors", []) if not j.get("pass", False) else []
     except Exception as e:
-        return [f"(critic no disponible: {e})"]
+        event("WARN", spec.get("_slug", "?"), spec.get("number", 0), "run_critic",
+              m, detail=f"JSON invalido, se omite esta pasada: {e}")
+        return []
 
 @app.command()
 def new(title: str, language: str = "en", niche: str = "children-bedtime",
@@ -411,6 +415,10 @@ def outline(slug: str):
     specs = []
     # round-robin de perfiles para distribuir parejo entre protagonistas
     _rr_pool = []
+    _name_pool = []
+    _helper_pool = []
+    _solution_pool = []
+
     if hero_profiles:
         rounds = (cfg["stories"] // max(1, len(hero_profiles))) + 2
         for _ in range(rounds):
@@ -445,12 +453,26 @@ def outline(slug: str):
         else:
             allowed_settings = _habitat_settings(prot, bags["setting"])
         setting = rng.choice(allowed_settings)
-        solution = rng.choice(bags["solution"])
+        if not _solution_pool:
+            base_s = bags["solution"][:]
+            for _ in range((cfg["stories"] // max(1, len(base_s))) + 2):
+                b = base_s[:]; rng.shuffle(b); _solution_pool.extend(b)
+        solution = _solution_pool[(n - 1) % len(_solution_pool)]
         moral = moral_map.get(solution) or rng.choice(bags["moral"])
+        if not _name_pool:
+            base_n = bags["name"][:]
+            for _ in range((cfg["stories"] // max(1, len(base_n))) + 2):
+                b = base_n[:]; rng.shuffle(b); _name_pool.extend(b)
+        if not _helper_pool:
+            base_h = bags["helper"][:]
+            for _ in range((cfg["stories"] // max(1, len(base_h))) + 2):
+                b = base_h[:]; rng.shuffle(b); _helper_pool.extend(b)
+        name_pick = _name_pool[(n - 1) % len(_name_pool)]
+        helper_pick = _helper_pool[(n - 1) % len(_helper_pool)]
         spec = {
-            "number": n, "protagonist": prot, "name": rng.choice(bags["name"]),
+            "number": n, "protagonist": prot, "name": name_pick,
             "traits": trait_str, "setting": setting, "goal": goal,
-            "problem": rng.choice(bags["problem"]), "helper": rng.choice(bags["helper"]),
+            "problem": rng.choice(bags["problem"]), "helper": helper_pick,
             "object": rng.choice(bags["object"]), "emotion": rng.choice(bags["emotion"]),
             "solution": solution, "ending": rng.choice(bags["ending"]),
             "moral": moral, "word_target": cfg["words_per_story"],
@@ -505,20 +527,31 @@ def _edit_flow(d, cfg, story, model):
     return out, issues, tok
 
 def run_reader(cfg, spec, text, model=None):
+    """Resiliente a JSON malformado (ver run_critic)."""
     m = model or cfg["model_cloud"]
     sys_p = (PROMPTS / "reader.md").read_text()
     payload = json.dumps({"story_spec": spec, "story_text": text})
-    out, _ = call_ollama(m, sys_p, payload, temperature=0.2)
-    j = extract_json(out)
-    return j
+    try:
+        out, _ = call_ollama(m, sys_p, payload, temperature=0.2)
+        return extract_json(out)
+    except Exception as e:
+        event("WARN", spec.get("_slug", "?"), spec.get("number", 0), "run_reader",
+              m, detail=f"JSON invalido, se da por conforme esta ronda: {e}")
+        return {"pass": True, "unanswered": [], "weird": []}
 
 def run_world(cfg, spec, text, model=None):
+    """Resiliente a JSON malformado (ver run_critic)."""
     m = model or cfg["model_cloud"]
     sys_p = (PROMPTS / "world.md").read_text()
     payload = json.dumps({"story_spec": spec, "story_text": text})
-    out, _ = call_ollama(m, sys_p, payload, temperature=0.1)
-    j = extract_json(out)
-    return j.get("conflicts", []) if not j.get("pass", False) else []
+    try:
+        out, _ = call_ollama(m, sys_p, payload, temperature=0.1)
+        j = extract_json(out)
+        return j.get("conflicts", []) if not j.get("pass", False) else []
+    except Exception as e:
+        event("WARN", spec.get("_slug", "?"), spec.get("number", 0), "run_world",
+              m, detail=f"JSON invalido, se omite esta pasada: {e}")
+        return []
 
 def fix_with_editor(cfg, spec, text, issues, model=None):
     """Reusa el editor para corregir una lista de problemas manteniendo idioma."""
@@ -657,7 +690,9 @@ def process(slug: str, story: int, model: str = ""):
         event("WARN", slug, story, "process_worldfix", model, detail=final_conflicts)
         issues_w = [f"{c.get('issue','')} -> fix: {c.get('fix','')}" for c in final_conflicts]
         text, _ = fix_with_editor(cfg, spec, text, issues_w, model)
-    text = fix_capitalization(text, spec)
+    # fix_capitalization desactivado: rompia nombres propios de personajes
+    # (los bajaba a minuscula parcialmente, ej. "golden Key") y el genero
+    # de fantasia infantil los usa legitimamente como nombre propio.
     (d / "final").mkdir(exist_ok=True)
     (d / "final" / f"st{story:03d}.md").write_text(text)
     fw = len(text.split()); tgt = spec.get("word_target", 450)
