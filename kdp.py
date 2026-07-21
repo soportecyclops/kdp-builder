@@ -43,12 +43,22 @@ def call_ollama(model, system, user, temperature=0.7, timeout=450, seed=None, re
     if repeat_penalty is not None:
         opts["repeat_penalty"] = repeat_penalty
     last = None
-    for attempt in range(retries):
+    rate_limit_retries = 4  # 429 se resuelve esperando, no reintentando rapido
+    total_attempts = max(retries, rate_limit_retries)
+    for attempt in range(total_attempts):
         try:
             r = httpx.post(f"{OLLAMA}/api/chat", timeout=timeout, json={
                 "model": model, "stream": False, "options": opts,
                 "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]})
+            if r.status_code == 429:
+                if attempt >= rate_limit_retries - 1:
+                    raise RuntimeError(f"HTTP 429 (rate limit) persistente tras {rate_limit_retries} intentos")
+                wait = int(r.headers.get("Retry-After", 20 * (attempt + 1)))
+                last = f"HTTP 429, esperando {wait}s"
+                time.sleep(wait); continue
             if r.status_code >= 500:
+                if attempt >= retries - 1:
+                    break
                 last = f"HTTP {r.status_code}"
                 time.sleep(2 * (attempt + 1)); continue
             r.raise_for_status()
@@ -57,8 +67,10 @@ def call_ollama(model, system, user, temperature=0.7, timeout=450, seed=None, re
                 raise RuntimeError(j["error"])
             return j["message"]["content"], j.get("eval_count", 0)
         except (httpx.TimeoutException, httpx.ConnectError) as e:
+            if attempt >= retries - 1:
+                last = str(e); break
             last = str(e); time.sleep(2 * (attempt + 1))
-    raise RuntimeError(f"call_ollama fallo tras {retries} intentos: {last}")
+    raise RuntimeError(f"call_ollama fallo tras {total_attempts} intentos: {last}")
 
 LOGFILE = BASE / "logs" / "pipeline.log"
 
