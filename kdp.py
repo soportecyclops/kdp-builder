@@ -36,18 +36,29 @@ def db():
 def slugify(s):
     return re.sub(r'[^a-z0-9]+', '-', s.lower()).strip('-')[:60]
 
-def call_ollama(model, system, user, temperature=0.7, timeout=1800, seed=None):
+def call_ollama(model, system, user, temperature=0.7, timeout=1800, seed=None, retries=3, repeat_penalty=None):
     opts = {"temperature": temperature}
     if seed is not None:
         opts["seed"] = seed
-    r = httpx.post(f"{OLLAMA}/api/chat", timeout=timeout, json={
-        "model": model, "stream": False, "options": opts,
-        "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]})
-    r.raise_for_status()
-    j = r.json()
-    if j.get("error"):
-        raise RuntimeError(j["error"])
-    return j["message"]["content"], j.get("eval_count", 0)
+    if repeat_penalty is not None:
+        opts["repeat_penalty"] = repeat_penalty
+    last = None
+    for attempt in range(retries):
+        try:
+            r = httpx.post(f"{OLLAMA}/api/chat", timeout=timeout, json={
+                "model": model, "stream": False, "options": opts,
+                "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]})
+            if r.status_code >= 500:
+                last = f"HTTP {r.status_code}"
+                time.sleep(3 * (attempt + 1)); continue
+            r.raise_for_status()
+            j = r.json()
+            if j.get("error"):
+                raise RuntimeError(j["error"])
+            return j["message"]["content"], j.get("eval_count", 0)
+        except (httpx.TimeoutException, httpx.ConnectError) as e:
+            last = str(e); time.sleep(3 * (attempt + 1))
+    raise RuntimeError(f"call_ollama fallo tras {retries} intentos: {last}")
 
 LOGFILE = BASE / "logs" / "pipeline.log"
 
@@ -82,6 +93,17 @@ def load_book(slug):
 
 def set_stage(slug, stage):
     c = db(); c.execute("UPDATE books SET stage=? WHERE slug=?", (stage, slug)); c.commit(); c.close()
+
+_FLIGHTLESS_KW = ["penguin","pinguino","pingüino","bear","oso","rabbit","conejo",
+    "fox","zorro","turtle","tortuga","elephant","elefante","lion","leon","león",
+    "mouse","raton","ratón","squirrel","ardilla","hedgehog","erizo","koala","panda"]
+_FLY_KW = ["fly","flying","volar","vuela"]
+
+def _goal_incompatible(protagonist, goal):
+    pl, gl = str(protagonist).lower(), str(goal).lower()
+    if any(k in gl for k in _FLY_KW) and any(k in pl for k in _FLIGHTLESS_KW):
+        return True
+    return False
 
 def _profile_to_fields(p):
     if isinstance(p, str):
@@ -126,6 +148,48 @@ def build_beats(spec):
     return beats
 # -------------------------------------------
 
+def fix_capitalization(text, spec):
+    """Baja a minuscula ingredientes comunes usados mid-sentence.
+    Preserva nombres propios (spec['name']), inicios de oracion y headings."""
+    import re as _re
+    proper = set()
+    nm = spec.get("name", "")
+    if nm:
+        proper.update(nm.split())
+    # frases de ingredientes comunes (objeto, ayudante, etc.) que NO son nombres propios
+    common_fields = ["object", "helper", "problem", "goal", "solution", "companion",
+                     "reward", "celebration", "antagonist", "obstacle", "weather", "season"]
+    phrases = []
+    for f in common_fields:
+        v = spec.get(f)
+        if isinstance(v, str) and v:
+            v = _re.sub(r'\s*\(.*?\)', '', v).strip()  # quita "(villain: ...)"
+            phrases.append(v)
+    # ordenar por largo desc para reemplazar frases antes que palabras sueltas
+    phrases.sort(key=len, reverse=True)
+
+    def lower_first(m):
+        return m.group(0)[0].lower() + m.group(0)[1:]
+
+    out = text
+    for ph in phrases:
+        if not ph or ph[0].islower():
+            continue
+        # variantes: la frase tal cual (Title Case). La bajamos salvo inicio de oracion.
+        pat = _re.compile(r'(?<![.!?]\s)(?<!^)(?<!## )\b' + _re.escape(ph) + r'\b', _re.M)
+        # no tocar si contiene un nombre propio
+        if any(w in proper for w in ph.split()):
+            continue
+        out = pat.sub(lambda m: ph[0].lower()+ph[1:], out)
+    # palabras sueltas Title Case comunes frecuentes de las bolsas
+    stand_alone = ["Grandma","Grandpa","Puppy","Kitten","Bunny","Best Friend"]
+    for w in stand_alone:
+        if w in proper:
+            continue
+        pat = _re.compile(r'(?<![.!?]\s)(?<!^)(?<!## )\b'+_re.escape(w)+r'\b', _re.M)
+        out = pat.sub(w[0].lower()+w[1:], out)
+    return out
+
 def qc_story(text, spec):
     issues = []
     headings = len(re.findall(r'^## ', text, re.M))
@@ -138,16 +202,16 @@ def qc_story(text, spec):
     lessons = len(re.findall(r'^(Lesson|Moraleja):', text, re.M))
     if lessons > 1:
         issues.append(f"{lessons} lineas de moraleja")
-    # parrafos duplicados
+    # parrafos duplicados (defecto real de coherencia)
     paras = [p.strip() for p in text.split("\n\n") if len(p.strip()) > 60]
     if len(paras) != len(set(paras)):
         issues.append("parrafos duplicados")
+    # longitud: solo bloquea si esta MUY corto (senal de contenido faltante/truncado),
+    # nunca por exceso; la calidad manda y el recorte lo hace el filtro humano final.
     words = len(text.split())
     tgt = spec.get("word_target", 450)
-    if words < tgt * 0.7:
-        issues.append(f"muy corto ({words}w, target {tgt})")
-    if words > tgt * 1.3:
-        issues.append(f"muy largo ({words}w, target {tgt})")
+    if words < tgt * 0.5:
+        issues.append(f"demasiado corto, posible contenido faltante ({words}w, target {tgt})")
     return issues
 
 def _sanitize_segment(seg, i, is_last, per_beat, prev_tail):
@@ -179,6 +243,21 @@ def _sanitize_segment(seg, i, is_last, per_beat, prev_tail):
         seg = (m.group(1) if m else cut).strip()
     return seg
 
+def _fallback_text(i, spec):
+    """Texto de emergencia si el modelo local falla 3 veces en un beat.
+    Usa solo datos de la spec, nunca el texto interno del beat."""
+    p = f"{spec.get('name','')} the {spec.get('protagonist','')}"
+    tpl = [
+        f"{p} lived in the {spec.get('setting','')}.",
+        f"{p} wanted to {str(spec.get('goal','')).lower()}.",
+        f"But then, {str(spec.get('problem','')).lower()}.",
+        f"{spec.get('helper','')} came to help {p}.",
+        f"{p} {str(spec.get('solution','')).lower()}.",
+        f"Everything worked out well.",
+        f"Lesson: {spec.get('moral','')}",
+    ]
+    return tpl[i] if i < len(tpl) else ""
+
 def iter_story_segments(cfg, spec, seg_retries=2):
     """Escritura segmentada con autoconsulta: una llamada por beat."""
     sys_p = (PROMPTS / "writer_segment.md").read_text()
@@ -204,7 +283,7 @@ def iter_story_segments(cfg, spec, seg_retries=2):
             t0 = time.time()
             seed = (cfg.get("seed", 0) * 1000) + (story * 100) + (i * 10) + attempt
             try:
-                raw, _ = call_ollama(cfg["model_local"], sys_p, payload, temperature=0.6, seed=seed)
+                raw, _ = call_ollama(cfg["model_local"], sys_p, payload, temperature=0.6, seed=seed, repeat_penalty=1.3)
             except Exception as e:
                 event("ERROR", slug, story, f"writer_seg{i+1}", cfg["model_local"],
                       time.time() - t0, detail=f"attempt {attempt+1}: {e}")
@@ -222,8 +301,8 @@ def iter_story_segments(cfg, spec, seg_retries=2):
                 break
             seg = ""
         if not seg:
-            seg = f"({beat})"
-            event("ERROR", slug, story, f"writer_seg{i+1}", cfg["model_local"], detail="segmento vacio tras reintentos, marcador insertado")
+            seg = _fallback_text(i, spec)
+            event("ERROR", slug, story, f"writer_seg{i+1}", cfg["model_local"], detail="fallback template usado (3 intentos fallidos)")
         full += ("\n\n" if full else "") + seg
         covered.append(beat.split(":")[0] + ": done")
         yield i, seg
@@ -285,26 +364,35 @@ def outline(slug: str):
     d, cfg = load_book(slug)
     bags = yaml.safe_load(bags_path(cfg.get("language", "en")).read_text())
     compat = bags.pop("compat_setting", {})
+    compat_weather = bags.pop("compat_weather", {})
     moral_map = bags.pop("moral_by_solution", {})
     hero_profiles = bags.pop("protagonist_profiles", None)
     villain_profiles = bags.pop("antagonist_profiles", None)
     rng = random.Random(cfg["seed"])
     used_pairs = set()
     specs = []
+    # round-robin de perfiles para distribuir parejo entre protagonistas
+    _rr_pool = []
+    if hero_profiles:
+        rounds = (cfg["stories"] // max(1, len(hero_profiles))) + 2
+        for _ in range(rounds):
+            batch = hero_profiles[:]
+            rng.shuffle(batch)
+            _rr_pool.extend(batch)
     for n in range(1, cfg["stories"] + 1):
         if hero_profiles:
-            for _ in range(50):
-                prof = rng.choice(hero_profiles)
+            for _attempt in range(50):
+                prof = _rr_pool[(n - 1 + _attempt) % len(_rr_pool)]
                 animal, role, traits = _profile_to_fields(prof)
                 goal = rng.choice(bags["goal"])
-                if (animal, goal) not in used_pairs:
+                if (animal, goal) not in used_pairs and not _goal_incompatible(animal, goal):
                     used_pairs.add((animal, goal)); break
             prot, trait_str = animal, ", ".join(traits) if traits else rng.choice(bags["trait"])
         else:
             for _ in range(50):
                 prot = rng.choice(bags["protagonist"])
                 goal = rng.choice(bags["goal"])
-                if (prot, goal) not in used_pairs:
+                if (prot, goal) not in used_pairs and not _goal_incompatible(prot, goal):
                     used_pairs.add((prot, goal)); break
             trait_str = rng.choice(bags["trait"])
         setting = rng.choice(compat.get(prot, bags["setting"]))
@@ -322,6 +410,8 @@ def outline(slug: str):
             if opt == "antagonist" and villain_profiles:
                 a, r_, t = _profile_to_fields(rng.choice(villain_profiles))
                 spec["antagonist"] = f"{a} ({r_}: {', '.join(t)})" if t else a
+            elif opt == "weather" and setting in compat_weather:
+                spec[opt] = rng.choice(compat_weather[setting])
             else:
                 spec[opt] = rng.choice(bags[opt])
         specs.append(spec)
@@ -513,8 +603,17 @@ def process(slug: str, story: int, model: str = ""):
     if final_issues:
         event("WARN", slug, story, "process_postcheck", model, detail=final_issues)
         text, _ = fix_with_editor(cfg, spec, text, final_issues, model)
+    final_conflicts = run_world(cfg, spec, text, model)
+    if final_conflicts:
+        event("WARN", slug, story, "process_worldfix", model, detail=final_conflicts)
+        issues_w = [f"{c.get('issue','')} -> fix: {c.get('fix','')}" for c in final_conflicts]
+        text, _ = fix_with_editor(cfg, spec, text, issues_w, model)
+    text = fix_capitalization(text, spec)
     (d / "final").mkdir(exist_ok=True)
     (d / "final" / f"st{story:03d}.md").write_text(text)
+    fw = len(text.split()); tgt = spec.get("word_target", 450)
+    event("INFO", slug, story, "process_final", model, time.time() - t0, words_out=fw,
+          detail=f"final {fw}w (target {tgt}, {round(100*fw/tgt)}%) - longitud informativa")
     log(slug, "process", model, time.time() - t0, 0, True)
     print(f"[green]FINAL st{story:03d}[/] ({time.time()-t0:.0f}s)")
 

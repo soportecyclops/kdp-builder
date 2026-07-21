@@ -60,3 +60,9 @@ moral_by_solution:
   Uso su valentia: La valentia crece de a poco
   Practico todos los dias: Los suenos se cumplen con esfuerzo
   Escucho con atencion: Escuchar es un superpoder
+compat_weather:
+  Luna: [Cielo despejado, Noche estrellada]
+  Estacion espacial: [Cielo despejado, Noche estrellada]
+  Desierto: [Soleado, Calido, Ventoso, Cielo despejado, Con brisa]
+  Artico: [Nevado, Frio, Con escarcha, Con niebla, Ventoso, Cielo despejado, Noche estrellada]
+  Bosque Nevado: [Nevado, Frio, Con escarcha, Con niebla, Cielo despejado, Noche estrellada]
