@@ -99,6 +99,44 @@ _FLIGHTLESS_KW = ["penguin","pinguino","pingüino","bear","oso","rabbit","conejo
     "mouse","raton","ratón","squirrel","ardilla","hedgehog","erizo","koala","panda"]
 _FLY_KW = ["fly","flying","volar","vuela"]
 
+
+# Reglas de habitat por palabra clave (evita especie+escenario imposibles,
+# escala solo agregando keywords, no requiere listar cada especie nueva).
+_MAGICAL_KW = ["robot","dragon","unicorn","fairy","wizard","ghost","alien"]
+_POLAR_KW = ["penguin","polar bear","arctic fox","seal","walrus"]
+_DESERT_KW = ["camel","desert fox","scorpion","meerkat"]
+_FOREST_ONLY_KW = ["panda","koala"]
+_SAVANNA_KW = ["giraffe","elephant","lion"]
+_JUNGLE_KW = ["monkey","toucan","parrot"]
+_AQUATIC_KW = ["fish","dolphin","whale","otter"]
+_WATERFOWL_KW = ["duck","turtle","frog","swan"]
+_EXOTIC_SETTINGS = {"Arctic","Snowy Forest","Desert","Moon","Space Station"}
+
+_HABITAT_RULES = [
+    (_POLAR_KW, {"Arctic","Snowy Forest","Beach","Lake"}),
+    (_DESERT_KW, {"Desert","Village","Cave"}),
+    (_FOREST_ONLY_KW, {"Forest","Treehouse","Mountain","Garden"}),
+    (_SAVANNA_KW, {"Jungle","Farm","Village"}),
+    (_JUNGLE_KW, {"Jungle","Beach","Garden","Treehouse","Forest","Village"}),
+    (_AQUATIC_KW, {"Lake","River","Beach","Crystal Island"}),
+    (_WATERFOWL_KW, {"Lake","River","Beach","Garden","Farm"}),
+]
+
+def _habitat_settings(protagonist, all_settings):
+    """Devuelve el subconjunto de settings plausible para esa especie.
+    Match por keyword (case-insensitive, substring), primera regla que matchea gana.
+    Especies magicas/mecanicas: sin restriccion. Desconocidas: se excluyen los
+    escenarios mas exoticos (Artico, Bosque Nevado, Desierto, Luna, Estacion espacial)."""
+    pl = str(protagonist).lower()
+    if any(k in pl for k in _MAGICAL_KW):
+        return all_settings
+    for kws, allowed in _HABITAT_RULES:
+        if any(k in pl for k in kws):
+            filtered = [x for x in all_settings if x in allowed]
+            return filtered or all_settings
+    fallback = [x for x in all_settings if x not in _EXOTIC_SETTINGS]
+    return fallback or all_settings
+
 def _goal_incompatible(protagonist, goal):
     pl, gl = str(protagonist).lower(), str(goal).lower()
     if any(k in gl for k in _FLY_KW) and any(k in pl for k in _FLIGHTLESS_KW):
@@ -389,13 +427,24 @@ def outline(slug: str):
                     used_pairs.add((animal, goal)); break
             prot, trait_str = animal, ", ".join(traits) if traits else rng.choice(bags["trait"])
         else:
-            for _ in range(50):
-                prot = rng.choice(bags["protagonist"])
+            if not _rr_pool:
+                base = bags["protagonist"][:]
+                rounds = (cfg["stories"] // max(1, len(base))) + 2
+                for _ in range(rounds):
+                    batch = base[:]
+                    rng.shuffle(batch)
+                    _rr_pool.extend(batch)
+            for _attempt in range(50):
+                prot = _rr_pool[(n - 1 + _attempt) % len(_rr_pool)]
                 goal = rng.choice(bags["goal"])
                 if (prot, goal) not in used_pairs and not _goal_incompatible(prot, goal):
                     used_pairs.add((prot, goal)); break
             trait_str = rng.choice(bags["trait"])
-        setting = rng.choice(compat.get(prot, bags["setting"]))
+        if prot in compat:
+            allowed_settings = compat[prot]
+        else:
+            allowed_settings = _habitat_settings(prot, bags["setting"])
+        setting = rng.choice(allowed_settings)
         solution = rng.choice(bags["solution"])
         moral = moral_map.get(solution) or rng.choice(bags["moral"])
         spec = {

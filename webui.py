@@ -378,6 +378,10 @@ def generate_all(slug: str, model: str = ""):
                 CANCEL_SLUGS.discard(slug)
                 return
             yield f"\n=== Cuento {n}/{total}: {st['protagonist']} {st['name']} ===\n"
+            final_path = d / "final" / f"st{n:03d}.md"
+            if final_path.exists():
+                yield f"[{n}] ya tiene FINAL -> se salta (no se reprocesa)\n"
+                continue
             draft = d / "stories" / f"st{n:03d}.md"
             needs = (not draft.exists()) or bool(kdp.qc_story(draft.read_text(), st))
             cancelled = False
